@@ -1,0 +1,125 @@
+https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/attribute-routing-in-web-api-2
+
+Attribute Routing in ASP.NET Web API 2
+=======================================
+
+Routing is how Web API matches a URI to an action. Web API 2 supports a new type of routing, called attribute routing. As the name implies, attribute routing uses attributes to define routes. Attribute routing gives you more control over the URIs in your web API. For example, you can easily create URIs that describe hierarchies of resources.+
+
+The earlier style of routing, called convention-based routing, is still fully supported. In fact, you can combine both techniques in the same project.
+
+https://docs.microsoft.com/en-us/aspnet/web-api/overview/web-api-routing-and-actions/create-a-rest-api-with-attribute-routing
+
+
+Why Attribute Routing?
+=======================
+
+The first release of Web API used convention-based routing. In that type of routing, you define one or more route templates, which are basically parameterized strings. When the framework receives a request, it matches the URI against the route template. (For more information about convention-based routing, see Routing in ASP.NET Web API.
+
+One advantage of convention-based routing is that templates are defined in a single place, and the routing rules are applied consistently across all controllers. Unfortunately, convention-based routing makes it hard to support certain URI patterns that are common in RESTful APIs. For example, resources often contain child resources: Customers have orders, movies have actors, books have authors, and so forth. It's natural to create URIs that reflect these relations:
+
+/customers/1/orders
+
+This type of URI is difficult to create using convention-based routing. Although it can be done, the results don't scale well if you have many controllers or resource types.
+
+With attribute routing, it's trivial to define a route for this URI. You simply add an attribute to the controller action:
+
+[Route("customers/{customerId}/orders")]
+public IEnumerable<Order> GetOrdersByCustomer(int customerId) { ... }
+
+Here are some other patterns that attribute routing makes easy.
+
+API versioning
+--------------
+
+In this example, "/api/v1/products" would be routed to a different controller than "/api/v2/products".
+
+/api/v1/products
+/api/v2/products
+
+Overloaded URI segments
+------------------------
+
+In this example, "1" is an order number, but "pending" maps to a collection.
+
+/orders/1
+/orders/pending
+
+Mulitple parameter types
+-------------------------
+
+In this example, "1" is an order number, but "2013/06/16" specifies a date.
+
+/orders/1
+/orders/2013/06/16
+
+
+Enabling Attribute Routing
+===========================
+
+To enable attribute routing, call MapHttpAttributeRoutes during configuration. This extension method is defined in the System.Web.Http.HttpConfigurationExtensions class.
+
+using System.Web.Http;
+
+namespace WebApplication
+{
+    public static class WebApiConfig
+    {
+        public static void Register(HttpConfiguration config)
+        {
+            // Web API routes
+            config.MapHttpAttributeRoutes();
+
+            // Other Web API configuration not shown.
+        }
+    }
+}
+
+Attribute routing can be combined with convention-based routing. To define convention-based routes, call the MapHttpRoute method.
+
+public static class WebApiConfig
+{
+    public static void Register(HttpConfiguration config)
+    {
+        // Attribute routing.
+        config.MapHttpAttributeRoutes();
+
+        // Convention-based routing.
+        config.Routes.MapHttpRoute(
+            name: "DefaultApi",
+            routeTemplate: "api/{controller}/{id}",
+            defaults: new { id = RouteParameter.Optional }
+        );
+    }
+}
+
+Adding Route Attributes
+=======================
+
+Here is an example of a route defined using an attribute:
+
+public class OrdersController : ApiController
+{
+    [Route("customers/{customerId}/orders")]
+    [HttpGet]
+    public IEnumerable<Order> FindOrdersByCustomer(int customerId) { ... }
+}
+
+The string "customers/{customerId}/orders" is the URI template for the route. Web API tries to match the request URI to the template. In this example, "customers" and "orders" are literal segments, and "{customerId}" is a variable parameter. The following URIs would match this template:
+
+    - http://localhost/customers/1/orders
+    - http://localhost/customers/bob/orders
+    - http://localhost/customers/1234-5678/orders
+
+You can restrict the matching by using constraints, described later in this topic.
+
+Notice that the "{customerId}" parameter in the route template matches the name of the customerId parameter in the method. When Web API invokes the controller action, it tries to bind the route parameters. For example, if the URI is http://example.com/customers/1/orders, Web API tries to bind the value "1" to the customerId parameter in the action.
+
+A URI template can have several parameters:
+
+[Route("customers/{customerId}/orders/{orderId}")]
+public Order GetOrderByCustomer(int customerId, int orderId) { ... }
+
+Any controller methods that do not have a route attribute use convention-based routing. That way, you can combine both types of routing in the same project.
+
+Http Methods
+============

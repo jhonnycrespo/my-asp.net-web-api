@@ -1,0 +1,89 @@
+https://docs.microsoft.com/en-us/aspnet/web-api/overview/formats-and-model-binding/parameter-binding-in-aspnet-web-api
+
+Parameter Binding
+=================
+
+When Web API calls a method on a controller, it must set values for the parameters, a process called binding. This article describes how Web API binds parameters, and how you can customize the binding process.
+
+By default, Web API uses the following rules to bind parameters:
+
+    - If the parameter is a "simple" type, Web API tries to get the value from the URI. Simple types include the .NET primitive types (int, bool, double, and so forth), plus TimeSpan, DateTime, Guid, decimal, and string, plus any type with a type converter that can convert from a string. (More about type converters later.)
+
+    - For complex types, Web API tries to read the value from the message body, using a "media-type formatter".
+
+
+Example:
+
+HttpResponseMessage Put(int id, Product item) { ... }
+
+The id parameter is a "simple" type, so Web API tries to get the value from the request URI. The item parameter is a complex type, so Web API uses a media-type formatter to read the value from the request body.
+
+
+Using [FromUri]
+================
+
+To force Web API to read a complex type from the URI, add the [FromUri] attribute to the parameter. The following example defines a GeoPoint type, along with a controller method that gets the GeoPoint from the URI.
+
+public class GeoPoint
+{
+    public double Latitude { get; set; } 
+    public double Longitude { get; set; }
+}
+
+public ValuesController : ApiController
+{
+    public HttpResponseMessage Get([FromUri] GeoPoint location) { ... }
+}
+
+The client can put the Latitude and Longitude values in the query string and Web API will use them to construct a GeoPoint. For example:
+
+http://localhost/api/values/?Latitude=47.678558&Longitude=-122.130989
+
+
+Using [FromBody]
+================
+
+To force Web API to read a simple type from the request body, add the [FromBody] attribute to the parameter:
+
+public HttpResponseMessage Post([FromBody] string name) { ... }
+
+In this example, Web API will use a media-type formatter to read the value of name from the request body. Here is an example client request.+
+
+POST http://localhost:5076/api/values HTTP/1.1
+User-Agent: Fiddler
+Host: localhost:5076
+Content-Type: application/json
+Content-Length: 7
+"Alice"
+
+When a parameter has [FromBody], Web API uses the Content-Type header to select a formatter. In this example, the content type is "application/json" and the request body is a raw JSON string (not a JSON object).
+
+At most one parameter is allowed to read from the message body. So this will not work:
+
+// Caution: Will not work!    
+public HttpResponseMessage Post([FromBody] int id, [FromBody] string name) { ... }
+
+The reason for this rule is that the request body might be stored in a non-buffered stream that can only be read once.
+
+
+Type Converters
+================
+
+You can make Web API treat a class as a simple type (so that Web API will try to bind it from the URI) by creating a TypeConverter and providing a string conversion.
+
+The following code shows a GeoPoint class that represents a geographical point, plus a TypeConverter that converts from strings to GeoPoint instances. The GeoPoint class is decorated with a [TypeConverter] attribute to specify the type converter. (This example was inspired by Mike Stall's blog post How to bind to custom objects in action signatures in MVC/WebAPI.)
+
+https://blogs.msdn.com/b/jmstall/archive/2012/04/20/how-to-bind-to-custom-objects-in-action-signatures-in-mvc-webapi.aspx
+
+...
+
+Model Binders
+=============
+
+
+Value Providers
+===============
+
+
+HttpParameterBinding
+=====================

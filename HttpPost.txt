@@ -1,0 +1,19 @@
+https://stackoverflow.com/questions/5332275/httppost-vs-httpget-attributes-in-mvc-why-use-httppost
+https://msdn.microsoft.com/en-us/library/system.web.mvc.actionmethodselectorattribute(v=vs.108).aspx
+
+HttpPost
+=========
+
+Is an optional attribute.
+
+The [HttpPost] attribute tells the routing engine to send any POST requests to that action method to the one method over the other. This is a type of overloading.
+
+The default for a method is [HttpGet]. Because of that, no attribute is needed.
+
+Example:
+
+[HttpGet]
+public ActionResult Edit(int id) { ... }
+
+[HttpPost]
+public ActionResult Edit(MyEditViewModel myEditViewModel) { ... }
